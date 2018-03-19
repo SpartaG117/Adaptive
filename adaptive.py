@@ -79,15 +79,19 @@ class Atten( nn.Module ):
     def forward( self, V, h_t, s_t ):
         '''
         Input: V=[v_1, v_2, ... v_k], h_t, s_t from LSTM
+        V = (n,k,d)
+        h_t = (n,1,d)
         Output: c_hat_t, attention feature map
         '''
         
         # W_v * V + W_g * h_t * 1^T
+        # content_v = (n,1,k,k) 
         content_v = self.affine_v( self.dropout( V ) ).unsqueeze( 1 ) \
                     + self.affine_g( self.dropout( h_t ) ).unsqueeze( 2 )
         
         # z_t = W_h * tanh( content_v )
         z_t = self.affine_h( self.dropout( F.tanh( content_v ) ) ).squeeze( 3 )
+        # z_t = (n,1,k)
         alpha_t = F.softmax( z_t.view( -1, z_t.size( 2 ) ) ).view( z_t.size( 0 ), z_t.size( 1 ), -1 )
         
         # Construct c_t: B x seq x hidden_size
